@@ -1,14 +1,14 @@
 "use client";
 
 import { useState, useEffect, useRef, useCallback } from 'react';
-import { RefreshCw } from 'lucide-react';
+import { RefreshCw, CheckSquare } from 'lucide-react';
 import { adaptiveTextGeneration } from '@/ai/flows/adaptive-text-generation';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { cn } from '@/lib/utils';
 import { useToast } from '@/hooks/use-toast';
-import { initialWords } from '@/lib/words';
+import { typingTexts } from '@/lib/words';
 
 type CharState = 'default' | 'correct' | 'incorrect';
 
@@ -26,32 +26,39 @@ export default function TypingTest() {
   const [accuracy, setAccuracy] = useState(0);
   const [isFinished, setIsFinished] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
+  const [resultsShown, setResultsShown] = useState(false);
 
   const inputRef = useRef<HTMLInputElement | null>(null);
   const { toast } = useToast();
 
   const calculateResults = useCallback(() => {
-    if (!startTime || !endTime) return;
+    const finalEndTime = endTime || Date.now();
+    if (!startTime) return;
 
-    const durationInMinutes = (endTime - startTime) / 1000 / 60;
-    const wordsTyped = text.length / 5;
+    const durationInMinutes = (finalEndTime - startTime) / 1000 / 60;
+    if (durationInMinutes === 0) return;
+    
+    const wordsTyped = userInput.trim().split(/\s+/).length;
     const calculatedWpm = Math.round(wordsTyped / durationInMinutes);
 
     let correctChars = 0;
-    text.forEach((char, index) => {
-        if (userInput[index] === char.char) {
+    userInput.split('').forEach((char, index) => {
+        if (text[index] && text[index].char === char) {
             correctChars++;
         }
     });
-    const calculatedAccuracy = Math.round((correctChars / text.length) * 100);
+    const calculatedAccuracy = Math.round((correctChars / userInput.length) * 100);
 
     setWpm(calculatedWpm);
-    setAccuracy(calculatedAccuracy);
+    setAccuracy(calculatedAccuracy || 0);
+    setIsFinished(true);
+    setResultsShown(true);
   }, [startTime, endTime, text, userInput]);
 
   const resetTest = useCallback(async (isRestart = false) => {
     setIsLoading(true);
     setIsFinished(false);
+    setResultsShown(false);
     setWpm(0);
     setAccuracy(0);
     setUserInput('');
@@ -61,7 +68,7 @@ export default function TypingTest() {
     try {
       let newText;
       if (isRestart || wpm === 0) {
-        newText = initialWords;
+        newText = typingTexts[Math.floor(Math.random() * typingTexts.length)];
       } else {
         const result = await adaptiveTextGeneration({ wpm, accuracy, previousText: text.map(c => c.char).join('') });
         newText = result.text;
@@ -71,10 +78,11 @@ export default function TypingTest() {
       console.error("Failed to generate text:", error);
       toast({
         title: "Error",
-        description: "Could not fetch new text. Using default text.",
+        description: "Could not fetch new text. Using a default text.",
         variant: "destructive",
       });
-      setText(initialWords.split('').map(char => ({ char, state: 'default' })));
+      const defaultText = typingTexts[Math.floor(Math.random() * typingTexts.length)];
+      setText(defaultText.split('').map(char => ({ char, state: 'default' })));
     } finally {
       setIsLoading(false);
       setTimeout(() => inputRef.current?.focus(), 0);
@@ -86,13 +94,6 @@ export default function TypingTest() {
     resetTest(true);
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
-  useEffect(() => {
-    if (isFinished) {
-      calculateResults();
-    }
-  }, [isFinished, calculateResults]);
-
-
   const handleInput = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
     
@@ -100,6 +101,10 @@ export default function TypingTest() {
 
     if (!startTime && value.length > 0) {
       setStartTime(Date.now());
+    }
+    
+    if (value.length >= text.length && !isFinished) {
+      setEndTime(Date.now());
     }
 
     setUserInput(value);
@@ -116,13 +121,13 @@ export default function TypingTest() {
     });
     
     setText(newText);
-
-    if (value.length === text.length) {
-      setEndTime(Date.now());
-      setIsFinished(true);
-    }
   };
 
+  const handleSubmit = () => {
+    if (!userInput) return;
+    setEndTime(Date.now());
+    calculateResults();
+  };
 
   const renderText = () => {
     return text.map((char, index) => {
@@ -134,10 +139,10 @@ export default function TypingTest() {
             'text-foreground/60': char.state === 'default',
             'text-foreground': char.state === 'correct',
             'bg-destructive text-destructive-foreground rounded': char.state === 'incorrect',
-            'relative': isCurrent
+            'relative': isCurrent && !isFinished
           }
         )}>
-          {isCurrent && <span className="absolute left-0 top-0 bottom-0 w-0.5 bg-accent animate-caret-blink" />}
+          {isCurrent && !isFinished && <span className="absolute left-0 top-0 bottom-0 w-0.5 bg-accent animate-caret-blink" />}
           {char.char === ' ' ? <span>&nbsp;</span> : char.char}
         </span>
       );
@@ -152,11 +157,12 @@ export default function TypingTest() {
             <div className="space-y-2 h-40">
               <Skeleton className="h-8 w-full" />
               <Skeleton className="h-8 w-full" />
+              <Skeleton className="h-8 w-full" />
               <Skeleton className="h-8 w-3/4" />
             </div>
           ) : (
             <div
-              className="tracking-wider leading-relaxed text-left h-40 overflow-hidden"
+              className="tracking-wider leading-relaxed text-left h-40 overflow-y-auto"
               onClick={() => inputRef.current?.focus()}
               aria-live="polite"
             >
@@ -179,14 +185,18 @@ export default function TypingTest() {
         </CardContent>
       </Card>
       
-      <div className="flex items-center justify-center w-full max-w-xl">
+      <div className="flex items-center justify-center w-full max-w-xl gap-4">
         <Button onClick={() => resetTest(true)} size="icon" variant="outline" className="h-12 w-12 border-2 border-accent/50 text-accent hover:bg-accent/10 hover:text-accent">
           <RefreshCw className="h-6 w-6" />
           <span className="sr-only">Restart Test</span>
         </Button>
+        <Button onClick={handleSubmit} size="icon" variant="outline" className="h-12 w-12 border-2 border-accent/50 text-accent hover:bg-accent/10 hover:text-accent" disabled={isFinished}>
+          <CheckSquare className="h-6 w-6" />
+          <span className="sr-only">Submit Test</span>
+        </Button>
       </div>
 
-      {isFinished && (
+      {resultsShown && (
         <div className="flex flex-col items-center gap-4 animate-in fade-in duration-500">
             <h2 className="text-2xl font-headline text-accent">Test Complete!</h2>
             <div className="flex items-center gap-6 text-center">
