@@ -160,7 +160,7 @@ export default function TypingTest() {
       <Card className="w-full bg-card/50 border-2 border-border p-8 relative">
         <CardContent className="p-0">
           {isLoading ? (
-            <div className="space-y-4 h-[200px]">
+            <div className="space-y-4 h-[240px]">
               <Skeleton className="h-8 w-full" />
               <Skeleton className="h-8 w-3/4" />
               <Skeleton className="h-8 w-1/2" />
@@ -170,11 +170,11 @@ export default function TypingTest() {
           ) : (
             <div
               ref={textContainerRef}
-              className="text-left h-[200px] relative overflow-y-auto scrollbar-hide"
+              className="text-left h-[240px] relative overflow-y-auto scrollbar-hide"
               onClick={() => inputRef.current?.focus()}
               aria-live="polite"
             >
-              <div className="flex flex-wrap">
+              <div>
                 {text.map((char, index) => {
                     const isCurrent = index === userInput.length;
                     return (
