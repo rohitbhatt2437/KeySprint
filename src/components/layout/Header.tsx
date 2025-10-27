@@ -1,6 +1,5 @@
 import Link from 'next/link';
 import { Keyboard } from 'lucide-react';
-import { Button } from '@/components/ui/button';
 
 export function Header() {
   return (
@@ -10,17 +9,6 @@ export function Header() {
           <Keyboard className="text-accent" />
           <h1 className="text-2xl font-headline font-bold text-accent">KeySprint</h1>
         </Link>
-        <div className="flex items-center gap-4">
-          <Button variant="ghost" asChild>
-            <Link href="/" className="font-headline">Type</Link>
-          </Button>
-          <Button variant="ghost" asChild>
-            <Link href="/leaderboard" className="font-headline">Leaderboard</Link>
-          </Button>
-          <Button variant="ghost" asChild>
-            <Link href="/profile" className="font-headline">Profile</Link>
-          </Button>
-        </div>
       </nav>
     </header>
   );
