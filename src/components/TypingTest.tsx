@@ -126,7 +126,7 @@ export default function TypingTest() {
     if (value.length >= text.length && !isFinished) {
       setEndTime(Date.now());
       setUserInput(value);
-      calculateResults(); // Auto-submit when text is fully typed
+      // The calculateResults will be called by handleSubmit now
       return;
     }
 
@@ -156,17 +156,25 @@ export default function TypingTest() {
     return text.map((char, index) => {
       const isCurrent = index === userInput.length;
       return (
-        <span key={index} className={cn(
-          'font-code text-2xl md:text-3xl transition-colors duration-100 leading-relaxed',
-          {
-            'text-foreground/60': char.state === 'default',
-            'text-foreground': char.state === 'correct',
-            'bg-destructive/80 text-destructive-foreground rounded': char.state === 'incorrect',
-            'relative': isCurrent,
-          }
-        )}>
-           {isCurrent && !isFinished && <span ref={caretRef} className="absolute -bottom-1 left-0 h-full w-0.5 bg-accent animate-caret-blink" />}
-          {char.char}
+        <span
+          key={index}
+          className={cn(
+            'font-code text-2xl md:text-3xl transition-colors duration-100 leading-relaxed',
+            {
+              'text-foreground/60': char.state === 'default',
+              'text-foreground': char.state === 'correct',
+              'bg-destructive/80 text-destructive-foreground rounded': char.state === 'incorrect',
+            }
+          )}
+        >
+          {isCurrent && !isFinished && (
+            <span
+              ref={caretRef}
+              className="absolute bottom-0 left-0 h-full w-0.5 bg-accent animate-caret-blink"
+              style={{ transform: `translateX(${index * 0.6}em)` }} // This is an approximation
+            />
+          )}
+          {char.char === ' ' ? <span>&nbsp;</span> : char.char}
         </span>
       );
     });
@@ -177,7 +185,7 @@ export default function TypingTest() {
       <Card className="w-full bg-card/50 border-2 border-border p-8 relative">
         <CardContent className="p-0">
           {isLoading ? (
-            <div className="space-y-4 h-52">
+            <div className="space-y-4 h-[120px]">
               <Skeleton className="h-8 w-full" />
               <Skeleton className="h-8 w-3/4" />
               <Skeleton className="h-8 w-1/2" />
@@ -187,12 +195,31 @@ export default function TypingTest() {
           ) : (
             <div
               ref={textContainerRef}
-              className="overflow-y-auto text-left h-52 scrollbar-hide relative"
+              className="text-left h-[120px] relative overflow-y-auto scrollbar-hide"
               onClick={() => inputRef.current?.focus()}
               aria-live="polite"
             >
-              <div className="flex flex-wrap">
-                {renderText()}
+              <div className="whitespace-pre-wrap">
+                {text.map((char, index) => {
+                    const isCurrent = index === userInput.length;
+                    return (
+                        <span key={index} className="relative">
+                            <span
+                                className={cn(
+                                'font-code text-2xl md:text-3xl transition-colors duration-100 leading-relaxed',
+                                {
+                                    'text-foreground/60': char.state === 'default',
+                                    'text-foreground': char.state === 'correct',
+                                    'bg-destructive/80 text-destructive-foreground rounded': char.state === 'incorrect',
+                                }
+                                )}
+                            >
+                                {char.char}
+                            </span>
+                            {isCurrent && !isFinished && <span ref={caretRef} className="absolute bottom-0 left-0 h-full w-0.5 bg-accent animate-caret-blink" />}
+                        </span>
+                    );
+                })}
               </div>
             </div>
           )}
