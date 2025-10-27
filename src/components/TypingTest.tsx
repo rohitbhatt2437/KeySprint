@@ -105,11 +105,14 @@ export default function TypingTest() {
         const caret = caretRef.current;
         const container = textContainerRef.current;
         
-        const caretRect = caret.getBoundingClientRect();
-        const containerRect = container.getBoundingClientRect();
+        const activeSpan = caret.parentElement;
+        if (activeSpan) {
+            const caretRect = activeSpan.getBoundingClientRect();
+            const containerRect = container.getBoundingClientRect();
 
-        if (caretRect.bottom > containerRect.bottom || caretRect.top < containerRect.top) {
-            caret.scrollIntoView({ block: 'center', behavior: 'smooth' });
+            if (caretRect.bottom > containerRect.bottom || caretRect.top < containerRect.top) {
+                activeSpan.scrollIntoView({ block: 'center', behavior: 'smooth' });
+            }
         }
     }
 }, [userInput]);
@@ -147,37 +150,9 @@ export default function TypingTest() {
   };
 
   const handleSubmit = () => {
-    if (!userInput || isFinished) return;
+    if (!userInput || resultsShown) return;
     setEndTime(Date.now());
     calculateResults();
-  };
-
-  const renderText = () => {
-    return text.map((char, index) => {
-      const isCurrent = index === userInput.length;
-      return (
-        <span
-          key={index}
-          className={cn(
-            'font-code text-2xl md:text-3xl transition-colors duration-100 leading-relaxed',
-            {
-              'text-foreground/60': char.state === 'default',
-              'text-foreground': char.state === 'correct',
-              'bg-destructive/80 text-destructive-foreground rounded': char.state === 'incorrect',
-            }
-          )}
-        >
-          {isCurrent && !isFinished && (
-            <span
-              ref={caretRef}
-              className="absolute bottom-0 left-0 h-full w-0.5 bg-accent animate-caret-blink"
-              style={{ transform: `translateX(${index * 0.6}em)` }} // This is an approximation
-            />
-          )}
-          {char.char === ' ' ? <span>&nbsp;</span> : char.char}
-        </span>
-      );
-    });
   };
 
   return (
@@ -185,7 +160,7 @@ export default function TypingTest() {
       <Card className="w-full bg-card/50 border-2 border-border p-8 relative">
         <CardContent className="p-0">
           {isLoading ? (
-            <div className="space-y-4 h-[120px]">
+            <div className="space-y-4 h-[200px]">
               <Skeleton className="h-8 w-full" />
               <Skeleton className="h-8 w-3/4" />
               <Skeleton className="h-8 w-1/2" />
@@ -195,11 +170,11 @@ export default function TypingTest() {
           ) : (
             <div
               ref={textContainerRef}
-              className="text-left h-[120px] relative overflow-y-auto scrollbar-hide"
+              className="text-left h-[200px] relative overflow-y-auto scrollbar-hide"
               onClick={() => inputRef.current?.focus()}
               aria-live="polite"
             >
-              <div className="whitespace-pre-wrap">
+              <div className="flex flex-wrap">
                 {text.map((char, index) => {
                     const isCurrent = index === userInput.length;
                     return (
@@ -214,9 +189,9 @@ export default function TypingTest() {
                                 }
                                 )}
                             >
-                                {char.char}
+                                {char.char === ' ' ? <span>&nbsp;</span> : char.char}
                             </span>
-                            {isCurrent && !isFinished && <span ref={caretRef} className="absolute bottom-0 left-0 h-full w-0.5 bg-accent animate-caret-blink" />}
+                            {isCurrent && !isFinished && <span ref={caretRef} className="absolute inset-y-0 left-0 w-0.5 bg-accent animate-caret-blink" />}
                         </span>
                     );
                 })}
@@ -244,7 +219,7 @@ export default function TypingTest() {
           <RefreshCw className="h-6 w-6" />
           <span className="sr-only">Restart Test</span>
         </Button>
-        <Button onClick={handleSubmit} size="icon" variant="outline" className="h-12 w-12 border-2 border-accent/50 text-accent hover:bg-accent/10 hover:text-accent" disabled={isFinished || !userInput}>
+        <Button onClick={handleSubmit} size="icon" variant="outline" className="h-12 w-12 border-2 border-accent/50 text-accent hover:bg-accent/10 hover:text-accent" disabled={resultsShown || !userInput}>
           <CheckSquare className="h-6 w-6" />
           <span className="sr-only">Submit Test</span>
         </Button>
