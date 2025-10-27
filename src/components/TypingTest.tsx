@@ -34,25 +34,33 @@ export default function TypingTest() {
   const { toast } = useToast();
 
   const calculateResults = useCallback(() => {
-    const finalEndTime = endTime || Date.now();
     if (!startTime) return;
+    const finalEndTime = endTime || Date.now();
 
     const durationInMinutes = (finalEndTime - startTime) / 1000 / 60;
     if (durationInMinutes === 0) return;
     
-    const wordsTyped = userInput.trim().split(/\s+/).length;
-    const calculatedWpm = Math.round(wordsTyped / durationInMinutes);
+    // Use the length of the original text's words for a more accurate WPM
+    const wordsInText = text.map(c => c.char).join('').trim().split(/\s+/).length;
+    const typedWords = userInput.substring(0, text.length).trim().split(/\s+/).length;
+    
+    // Base WPM on the number of words in the original text that were typed
+    const effectiveWords = Math.min(wordsInText, typedWords);
+
+    const calculatedWpm = Math.round(effectiveWords / durationInMinutes);
 
     let correctChars = 0;
-    userInput.split('').forEach((char, index) => {
-        if (text[index] && text[index].char === char) {
+    // Compare only up to the length of the typed input
+    text.slice(0, userInput.length).forEach((charObj, index) => {
+        if (charObj.char === userInput[index]) {
             correctChars++;
         }
     });
-    const calculatedAccuracy = Math.round((correctChars / userInput.length) * 100);
+
+    const calculatedAccuracy = userInput.length > 0 ? Math.round((correctChars / userInput.length) * 100) : 0;
 
     setWpm(calculatedWpm);
-    setAccuracy(calculatedAccuracy || 0);
+    setAccuracy(calculatedAccuracy);
     setIsFinished(true);
     setResultsShown(true);
   }, [startTime, endTime, text, userInput]);
@@ -97,18 +105,19 @@ export default function TypingTest() {
   
   useEffect(() => {
     if (caretRef.current && textContainerRef.current) {
-      const container = textContainerRef.current;
-      const caret = caretRef.current;
-      const containerRect = container.getBoundingClientRect();
-      const caretRect = caret.getBoundingClientRect();
+        const caret = caretRef.current;
+        const container = textContainerRef.current;
+        
+        const caretRect = caret.getBoundingClientRect();
+        const containerRect = container.getBoundingClientRect();
 
-      const scrollOffset = caret.offsetLeft - container.offsetLeft - container.clientWidth / 2;
-      container.scrollTo({
-        left: scrollOffset,
-        behavior: 'smooth',
-      });
+        // Check if caret is outside the visible area of the container
+        if (caretRect.bottom > containerRect.bottom || caretRect.top < containerRect.top) {
+            // Scroll to bring the caret into view
+            caret.scrollIntoView({ block: 'center', behavior: 'smooth' });
+        }
     }
-  }, [userInput]);
+}, [userInput]);
 
   const handleInput = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
@@ -121,6 +130,9 @@ export default function TypingTest() {
     
     if (value.length >= text.length && !isFinished) {
       setEndTime(Date.now());
+      setUserInput(value);
+      calculateResults(); // Auto-submit when text is fully typed
+      return;
     }
 
     setUserInput(value);
@@ -140,7 +152,7 @@ export default function TypingTest() {
   };
 
   const handleSubmit = () => {
-    if (!userInput) return;
+    if (!userInput || isFinished) return;
     setEndTime(Date.now());
     calculateResults();
   };
@@ -150,16 +162,15 @@ export default function TypingTest() {
       const isCurrent = index === userInput.length;
       return (
         <span key={index} className={cn(
-          'font-code text-2xl md:text-3xl transition-colors duration-100',
+          'font-code text-2xl md:text-3xl transition-colors duration-100 leading-relaxed',
           {
             'text-foreground/60': char.state === 'default',
             'text-foreground': char.state === 'correct',
-            'bg-destructive text-destructive-foreground rounded': char.state === 'incorrect',
-            'relative': isCurrent && !isFinished
+            'bg-destructive/80 text-destructive-foreground rounded': char.state === 'incorrect',
           }
         )}>
-          {isCurrent && !isFinished && <span ref={caretRef} className="absolute left-0 top-0 bottom-0 w-0.5 bg-accent animate-caret-blink" />}
-          {char.char === ' ' ? <span>&nbsp;</span> : char.char}
+           {isCurrent && !isFinished && <span ref={caretRef} className="absolute -bottom-1 left-0 h-full w-0.5 bg-accent animate-caret-blink" />}
+          {char.char}
         </span>
       );
     });
@@ -170,17 +181,21 @@ export default function TypingTest() {
       <Card className="w-full bg-card/50 border-2 border-border p-8 relative">
         <CardContent className="p-0">
           {isLoading ? (
-            <div className="space-y-2 h-10">
+            <div className="space-y-4 h-40">
               <Skeleton className="h-8 w-full" />
+              <Skeleton className="h-8 w-3/4" />
+              <Skeleton className="h-8 w-1/2" />
             </div>
           ) : (
             <div
               ref={textContainerRef}
-              className="whitespace-nowrap overflow-x-auto text-left h-10 scrollbar-hide"
+              className="overflow-y-auto text-left h-40 scrollbar-hide relative"
               onClick={() => inputRef.current?.focus()}
               aria-live="polite"
             >
-              {renderText()}
+              <div className="whitespace-normal leading-relaxed">
+                {renderText()}
+              </div>
             </div>
           )}
           <input
