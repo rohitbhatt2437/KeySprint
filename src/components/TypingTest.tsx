@@ -29,6 +29,8 @@ export default function TypingTest() {
   const [resultsShown, setResultsShown] = useState(false);
 
   const inputRef = useRef<HTMLInputElement | null>(null);
+  const textContainerRef = useRef<HTMLDivElement | null>(null);
+  const caretRef = useRef<HTMLSpanElement | null>(null);
   const { toast } = useToast();
 
   const calculateResults = useCallback(() => {
@@ -89,10 +91,24 @@ export default function TypingTest() {
     }
   }, [wpm, accuracy, text, toast]);
 
-
   useEffect(() => {
     resetTest(true);
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
+  
+  useEffect(() => {
+    if (caretRef.current && textContainerRef.current) {
+      const container = textContainerRef.current;
+      const caret = caretRef.current;
+      const containerRect = container.getBoundingClientRect();
+      const caretRect = caret.getBoundingClientRect();
+
+      const scrollOffset = caret.offsetLeft - container.offsetLeft - container.clientWidth / 2;
+      container.scrollTo({
+        left: scrollOffset,
+        behavior: 'smooth',
+      });
+    }
+  }, [userInput]);
 
   const handleInput = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
@@ -142,7 +158,7 @@ export default function TypingTest() {
             'relative': isCurrent && !isFinished
           }
         )}>
-          {isCurrent && !isFinished && <span className="absolute left-0 top-0 bottom-0 w-0.5 bg-accent animate-caret-blink" />}
+          {isCurrent && !isFinished && <span ref={caretRef} className="absolute left-0 top-0 bottom-0 w-0.5 bg-accent animate-caret-blink" />}
           {char.char === ' ' ? <span>&nbsp;</span> : char.char}
         </span>
       );
@@ -154,15 +170,13 @@ export default function TypingTest() {
       <Card className="w-full bg-card/50 border-2 border-border p-8 relative">
         <CardContent className="p-0">
           {isLoading ? (
-            <div className="space-y-2 h-40">
+            <div className="space-y-2 h-10">
               <Skeleton className="h-8 w-full" />
-              <Skeleton className="h-8 w-full" />
-              <Skeleton className="h-8 w-full" />
-              <Skeleton className="h-8 w-3/4" />
             </div>
           ) : (
             <div
-              className="tracking-wider leading-relaxed text-left h-40 overflow-y-auto"
+              ref={textContainerRef}
+              className="whitespace-nowrap overflow-x-auto text-left h-10 scrollbar-hide"
               onClick={() => inputRef.current?.focus()}
               aria-live="polite"
             >
@@ -190,7 +204,7 @@ export default function TypingTest() {
           <RefreshCw className="h-6 w-6" />
           <span className="sr-only">Restart Test</span>
         </Button>
-        <Button onClick={handleSubmit} size="icon" variant="outline" className="h-12 w-12 border-2 border-accent/50 text-accent hover:bg-accent/10 hover:text-accent" disabled={isFinished}>
+        <Button onClick={handleSubmit} size="icon" variant="outline" className="h-12 w-12 border-2 border-accent/50 text-accent hover:bg-accent/10 hover:text-accent" disabled={isFinished || !userInput}>
           <CheckSquare className="h-6 w-6" />
           <span className="sr-only">Submit Test</span>
         </Button>
