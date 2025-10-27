@@ -5,8 +5,8 @@ import { Footer } from '@/components/layout/Footer';
 import { Toaster } from "@/components/ui/toaster";
 
 export const metadata: Metadata = {
-  title: 'DarkType',
-  description: 'The ultimate typing challenge, with a dark twist.',
+  title: 'KeySprint',
+  description: 'The ultimate typing challenge.',
 };
 
 export default function RootLayout({

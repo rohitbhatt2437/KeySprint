@@ -5,7 +5,7 @@ export function Footer() {
   return (
     <footer className="py-6 px-6 md:px-12 w-full mt-auto">
       <div className="flex justify-between items-center text-muted-foreground">
-        <p className="text-sm">&copy; {new Date().getFullYear()} DarkType. All rights reserved.</p>
+        <p className="text-sm">&copy; {new Date().getFullYear()} KeySprint. All rights reserved.</p>
         <div className="flex items-center gap-4">
           <Link href="#" aria-label="Twitter">
             <Twitter className="w-5 h-5 hover:text-accent transition-colors" />
