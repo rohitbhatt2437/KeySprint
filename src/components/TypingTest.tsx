@@ -40,17 +40,14 @@ export default function TypingTest() {
     const durationInMinutes = (finalEndTime - startTime) / 1000 / 60;
     if (durationInMinutes === 0) return;
     
-    // Use the length of the original text's words for a more accurate WPM
     const wordsInText = text.map(c => c.char).join('').trim().split(/\s+/).length;
     const typedWords = userInput.substring(0, text.length).trim().split(/\s+/).length;
     
-    // Base WPM on the number of words in the original text that were typed
     const effectiveWords = Math.min(wordsInText, typedWords);
 
     const calculatedWpm = Math.round(effectiveWords / durationInMinutes);
 
     let correctChars = 0;
-    // Compare only up to the length of the typed input
     text.slice(0, userInput.length).forEach((charObj, index) => {
         if (charObj.char === userInput[index]) {
             correctChars++;
@@ -111,9 +108,7 @@ export default function TypingTest() {
         const caretRect = caret.getBoundingClientRect();
         const containerRect = container.getBoundingClientRect();
 
-        // Check if caret is outside the visible area of the container
         if (caretRect.bottom > containerRect.bottom || caretRect.top < containerRect.top) {
-            // Scroll to bring the caret into view
             caret.scrollIntoView({ block: 'center', behavior: 'smooth' });
         }
     }
@@ -167,6 +162,7 @@ export default function TypingTest() {
             'text-foreground/60': char.state === 'default',
             'text-foreground': char.state === 'correct',
             'bg-destructive/80 text-destructive-foreground rounded': char.state === 'incorrect',
+            'relative': isCurrent,
           }
         )}>
            {isCurrent && !isFinished && <span ref={caretRef} className="absolute -bottom-1 left-0 h-full w-0.5 bg-accent animate-caret-blink" />}
@@ -181,19 +177,21 @@ export default function TypingTest() {
       <Card className="w-full bg-card/50 border-2 border-border p-8 relative">
         <CardContent className="p-0">
           {isLoading ? (
-            <div className="space-y-4 h-40">
+            <div className="space-y-4 h-52">
               <Skeleton className="h-8 w-full" />
               <Skeleton className="h-8 w-3/4" />
               <Skeleton className="h-8 w-1/2" />
+              <Skeleton className="h-8 w-full" />
+              <Skeleton className="h-8 w-2/3" />
             </div>
           ) : (
             <div
               ref={textContainerRef}
-              className="overflow-y-auto text-left h-40 scrollbar-hide relative"
+              className="overflow-y-auto text-left h-52 scrollbar-hide relative"
               onClick={() => inputRef.current?.focus()}
               aria-live="polite"
             >
-              <div className="whitespace-normal leading-relaxed">
+              <div className="flex flex-wrap">
                 {renderText()}
               </div>
             </div>
