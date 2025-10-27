@@ -40,7 +40,7 @@ const prompt = ai.definePrompt({
   Previous text: {{previousText}}
 
   Ensure the generated text is suitable for a typing test and contains a variety of common English words.
-  The generated text must be at least 50 words long.
+  The generated text must be at least 70 words long.
   Do not include any title or numbering in the generated text.
   Output only the generated text.
   `,

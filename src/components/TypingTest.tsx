@@ -20,26 +20,43 @@ type Char = {
 export default function TypingTest() {
   const [text, setText] = useState<Char[]>([]);
   const [userInput, setUserInput] = useState('');
-  const [time, setTime] = useState(0);
-  const [isActive, setIsActive] = useState(false);
+  const [startTime, setStartTime] = useState<number | null>(null);
+  const [endTime, setEndTime] = useState<number | null>(null);
   const [wpm, setWpm] = useState(0);
-  const [accuracy, setAccuracy] = useState(100);
+  const [accuracy, setAccuracy] = useState(0);
   const [isFinished, setIsFinished] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
 
-  const timerRef = useRef<NodeJS.Timeout | null>(null);
   const inputRef = useRef<HTMLInputElement | null>(null);
   const { toast } = useToast();
 
+  const calculateResults = useCallback(() => {
+    if (!startTime || !endTime) return;
+
+    const durationInMinutes = (endTime - startTime) / 1000 / 60;
+    const wordsTyped = text.length / 5;
+    const calculatedWpm = Math.round(wordsTyped / durationInMinutes);
+
+    let correctChars = 0;
+    text.forEach((char, index) => {
+        if (userInput[index] === char.char) {
+            correctChars++;
+        }
+    });
+    const calculatedAccuracy = Math.round((correctChars / text.length) * 100);
+
+    setWpm(calculatedWpm);
+    setAccuracy(calculatedAccuracy);
+  }, [startTime, endTime, text, userInput]);
+
   const resetTest = useCallback(async (isRestart = false) => {
     setIsLoading(true);
-    setIsActive(false);
     setIsFinished(false);
-    setTime(0);
     setWpm(0);
-    setAccuracy(100);
+    setAccuracy(0);
     setUserInput('');
-    if (timerRef.current) clearInterval(timerRef.current);
+    setStartTime(null);
+    setEndTime(null);
 
     try {
       let newText;
@@ -64,62 +81,48 @@ export default function TypingTest() {
     }
   }, [wpm, accuracy, text, toast]);
 
+
   useEffect(() => {
     resetTest(true);
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
-    if (isActive && !isFinished) {
-      timerRef.current = setInterval(() => {
-        setTime(prevTime => {
-          const newTime = prevTime + 1;
-          const grossWpm = (userInput.length / 5) / (newTime / 60);
-          setWpm(Math.round(grossWpm > 0 ? grossWpm : 0));
-          return newTime;
-        });
-      }, 1000);
-    } else if (timerRef.current) {
-      clearInterval(timerRef.current);
+    if (isFinished) {
+      calculateResults();
     }
-    return () => {
-      if (timerRef.current) clearInterval(timerRef.current);
-    };
-  }, [isActive, isFinished, userInput]);
+  }, [isFinished, calculateResults]);
+
 
   const handleInput = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
     
     if (isFinished) return;
 
-    if (!isActive && value.length > 0) {
-      setIsActive(true);
+    if (!startTime && value.length > 0) {
+      setStartTime(Date.now());
     }
 
     setUserInput(value);
 
-    let currentErrors = 0;
     const newText = text.map((item, index) => {
       if (index < value.length) {
         if (item.char === value[index]) {
           return { ...item, state: 'correct' as CharState };
         } else {
-          currentErrors++;
           return { ...item, state: 'incorrect' as CharState };
         }
       }
       return { ...item, state: 'default' as CharState };
     });
     
-    setAccuracy(value.length > 0 ? Math.round(((value.length - currentErrors) / value.length) * 100) : 100);
     setText(newText);
 
     if (value.length === text.length) {
-      setIsActive(false);
+      setEndTime(Date.now());
       setIsFinished(true);
     }
   };
 
-  const formattedTime = new Date(time * 1000).toISOString().substr(14, 5);
 
   const renderText = () => {
     return text.map((char, index) => {
@@ -176,21 +179,7 @@ export default function TypingTest() {
         </CardContent>
       </Card>
       
-      <div className="flex items-center justify-between w-full max-w-xl">
-        <div className="flex items-center gap-6 text-center">
-            <div className="flex flex-col items-center gap-1">
-              <span className="text-sm font-headline text-muted-foreground">WPM</span>
-              <span className="text-3xl font-bold text-accent">{wpm}</span>
-            </div>
-            <div className="flex flex-col items-center gap-1">
-              <span className="text-sm font-headline text-muted-foreground">Acc</span>
-              <span className="text-3xl font-bold text-accent">{accuracy}%</span>
-            </div>
-            <div className="flex flex-col items-center gap-1">
-              <span className="text-sm font-headline text-muted-foreground">Time</span>
-              <span className="text-3xl font-bold text-accent">{formattedTime}</span>
-            </div>
-        </div>
+      <div className="flex items-center justify-center w-full max-w-xl">
         <Button onClick={() => resetTest(true)} size="icon" variant="outline" className="h-12 w-12 border-2 border-accent/50 text-accent hover:bg-accent/10 hover:text-accent">
           <RefreshCw className="h-6 w-6" />
           <span className="sr-only">Restart Test</span>
@@ -200,6 +189,16 @@ export default function TypingTest() {
       {isFinished && (
         <div className="flex flex-col items-center gap-4 animate-in fade-in duration-500">
             <h2 className="text-2xl font-headline text-accent">Test Complete!</h2>
+            <div className="flex items-center gap-6 text-center">
+                <div className="flex flex-col items-center gap-1">
+                <span className="text-sm font-headline text-muted-foreground">WPM</span>
+                <span className="text-3xl font-bold text-accent">{wpm}</span>
+                </div>
+                <div className="flex flex-col items-center gap-1">
+                <span className="text-sm font-headline text-muted-foreground">Acc</span>
+                <span className="text-3xl font-bold text-accent">{accuracy}%</span>
+                </div>
+            </div>
             <p className="text-muted-foreground">Well done! Ready for the next round?</p>
             <Button onClick={() => resetTest(false)} className="bg-accent text-accent-foreground hover:bg-accent/90">
                 Next Text
