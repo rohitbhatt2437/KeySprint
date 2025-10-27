@@ -181,17 +181,18 @@ export default function TypingTest() {
                         <span key={index} className="relative">
                             <span
                                 className={cn(
-                                'font-code text-2xl md:text-3xl transition-colors duration-100 leading-relaxed',
+                                'font-code text-2xl md:text-3xl transition-colors duration-100 h-[36px] leading-relaxed',
                                 {
                                     'text-foreground/60': char.state === 'default',
                                     'text-foreground': char.state === 'correct',
                                     'bg-destructive/80 text-destructive-foreground rounded': char.state === 'incorrect',
+                                    'whitespace-pre': char.char === ' ',
                                 }
                                 )}
                             >
                                 {char.char}
                             </span>
-                            {isCurrent && !isFinished && <span ref={caretRef} className="absolute inset-y-0 left-0 w-0.5 bg-accent animate-caret-blink" />}
+                            {isCurrent && !isFinished && <span ref={caretRef} className="absolute inset-y-0 left-0 w-0.5 bg-accent animate-caret-blink" style={{height: '90%'}} />}
                         </span>
                     );
                 })}
