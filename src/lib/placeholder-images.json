@@ -1,3 +1,64 @@
 {
-  "placeholderImages": []
+  "placeholderImages": [
+    {
+      "id": "avatar-1",
+      "description": "User avatar placeholder",
+      "imageUrl": "https://images.unsplash.com/photo-1631900268998-5b90da7f0895?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw3fHxhYnN0cmFjdCUyMHBlcnNvbnxlbnwwfHx8fDE3NjE1OTEzNTJ8MA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "abstract person"
+    },
+    {
+      "id": "avatar-2",
+      "description": "User avatar placeholder",
+      "imageUrl": "https://images.unsplash.com/photo-1754920957930-e146600b28d5?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw2fHxhYnN0cmFjdCUyMHBlcnNvbnxlbnwwfHx8fDE3NjE1OTEzNTJ8MA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "abstract person"
+    },
+    {
+      "id": "avatar-3",
+      "description": "User avatar placeholder",
+      "imageUrl": "https://images.unsplash.com/photo-1656397141911-03f06bc9f091?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw0fHxhYnN0cmFjdCUyMHBlcnNvbnxlbnwwfHx8fDE3NjE1OTEzNTJ8MA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "abstract person"
+    },
+    {
+      "id": "avatar-4",
+      "description": "User avatar placeholder",
+      "imageUrl": "https://images.unsplash.com/photo-1637408712106-c0585647e2af?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwxfHxhYnN0cmFjdCUyMHBlcnNvbnxlbnwwfHx8fDE3NjE1OTEzNTJ8MA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "abstract person"
+    },
+    {
+      "id": "avatar-5",
+      "description": "User avatar placeholder",
+      "imageUrl": "https://images.unsplash.com/photo-1639442632210-32e4233399c3?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw4fHxhYnN0cmFjdCUyMHBlcnNvbnxlbnwwfHx8fDE3NjE1OTEzNTJ8MA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "abstract person"
+    },
+    {
+      "id": "avatar-6",
+      "description": "User avatar placeholder",
+      "imageUrl": "https://images.unsplash.com/photo-1754920957930-e146600b28d5?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw2fHxhYnN0cmFjdCUyMHBlcnNvbnxlbnwwfHx8fDE3NjE1OTEzNTJ8MA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "abstract person"
+    },
+    {
+      "id": "avatar-7",
+      "description": "User avatar placeholder",
+      "imageUrl": "https://images.unsplash.com/photo-1733004441403-ac0d733b9d5b?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw1fHxhYnN0cmFjdCUyMHBlcnNvbnxlbnwwfHx8fDE3NjE1OTEzNTJ8MA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "abstract person"
+    },
+    {
+      "id": "avatar-8",
+      "description": "User avatar placeholder",
+      "imageUrl": "https://images.unsplash.com/photo-1733004441493-4299bed5dd5a?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwzfHxhYnN0cmFjdCUyMHBlcnNvbnxlbnwwfHx8fDE3NjE1OTEzNTJ8MA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "abstract person"
+    },
+    {
+      "id": "avatar-9",
+      "description": "User avatar placeholder",
+      "imageUrl": "https://images.unsplash.com/photo-1705975848221-d73d53c0119d?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwyfHxhYnN0cmFjdCUyMHBlcnNvbnxlbnwwfHx8fDE3NjE1OTEzNTJ8MA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "abstract person"
+    },
+    {
+      "id": "avatar-10",
+      "description": "User avatar placeholder",
+      "imageUrl": "https://images.unsplash.com/photo-1721467475695-4fcf9b85230e?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw5fHxhYnN0cmFjdCUyMHBlcnNvbnxlbnwwfHx8fDE3NjE1OTEzNTJ8MA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "abstract person"
+    }
+  ]
 }

@@ -1,0 +1,211 @@
+"use client";
+
+import { useState, useEffect, useRef, useCallback } from 'react';
+import { RefreshCw } from 'lucide-react';
+import { adaptiveTextGeneration } from '@/ai/flows/adaptive-text-generation';
+import { Card, CardContent } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Skeleton } from '@/components/ui/skeleton';
+import { cn } from '@/lib/utils';
+import { useToast } from '@/hooks/use-toast';
+import { initialWords } from '@/lib/words';
+
+type CharState = 'default' | 'correct' | 'incorrect';
+
+type Char = {
+  char: string;
+  state: CharState;
+};
+
+export default function TypingTest() {
+  const [text, setText] = useState<Char[]>([]);
+  const [userInput, setUserInput] = useState('');
+  const [time, setTime] = useState(0);
+  const [isActive, setIsActive] = useState(false);
+  const [wpm, setWpm] = useState(0);
+  const [accuracy, setAccuracy] = useState(100);
+  const [isFinished, setIsFinished] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+
+  const timerRef = useRef<NodeJS.Timeout | null>(null);
+  const inputRef = useRef<HTMLInputElement | null>(null);
+  const { toast } = useToast();
+
+  const resetTest = useCallback(async (isRestart = false) => {
+    setIsLoading(true);
+    setIsActive(false);
+    setIsFinished(false);
+    setTime(0);
+    setWpm(0);
+    setAccuracy(100);
+    setUserInput('');
+    if (timerRef.current) clearInterval(timerRef.current);
+
+    try {
+      let newText;
+      if (isRestart || wpm === 0) {
+        newText = initialWords;
+      } else {
+        const result = await adaptiveTextGeneration({ wpm, accuracy, previousText: text.map(c => c.char).join('') });
+        newText = result.text;
+      }
+      setText(newText.split('').map(char => ({ char, state: 'default' })));
+    } catch (error) {
+      console.error("Failed to generate text:", error);
+      toast({
+        title: "Error",
+        description: "Could not fetch new text. Using default text.",
+        variant: "destructive",
+      });
+      setText(initialWords.split('').map(char => ({ char, state: 'default' })));
+    } finally {
+      setIsLoading(false);
+      setTimeout(() => inputRef.current?.focus(), 0);
+    }
+  }, [wpm, accuracy, text, toast]);
+
+  useEffect(() => {
+    resetTest(true);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
+  useEffect(() => {
+    if (isActive && !isFinished) {
+      timerRef.current = setInterval(() => {
+        setTime(prevTime => {
+          const newTime = prevTime + 1;
+          const grossWpm = (userInput.length / 5) / (newTime / 60);
+          setWpm(Math.round(grossWpm > 0 ? grossWpm : 0));
+          return newTime;
+        });
+      }, 1000);
+    } else if (timerRef.current) {
+      clearInterval(timerRef.current);
+    }
+    return () => {
+      if (timerRef.current) clearInterval(timerRef.current);
+    };
+  }, [isActive, isFinished, userInput]);
+
+  const handleInput = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    
+    if (isFinished) return;
+
+    if (!isActive && value.length > 0) {
+      setIsActive(true);
+    }
+
+    setUserInput(value);
+
+    let currentErrors = 0;
+    const newText = text.map((item, index) => {
+      if (index < value.length) {
+        if (item.char === value[index]) {
+          return { ...item, state: 'correct' as CharState };
+        } else {
+          currentErrors++;
+          return { ...item, state: 'incorrect' as CharState };
+        }
+      }
+      return { ...item, state: 'default' as CharState };
+    });
+    
+    setAccuracy(value.length > 0 ? Math.round(((value.length - currentErrors) / value.length) * 100) : 100);
+    setText(newText);
+
+    if (value.length === text.length) {
+      setIsActive(false);
+      setIsFinished(true);
+    }
+  };
+
+  const formattedTime = new Date(time * 1000).toISOString().substr(14, 5);
+
+  const renderText = () => {
+    return text.map((char, index) => {
+      const isCurrent = index === userInput.length;
+      return (
+        <span key={index} className={cn(
+          'font-code text-2xl md:text-3xl transition-colors duration-100',
+          {
+            'text-foreground/60': char.state === 'default',
+            'text-foreground': char.state === 'correct',
+            'bg-destructive text-destructive-foreground rounded': char.state === 'incorrect',
+            'relative': isCurrent
+          }
+        )}>
+          {isCurrent && <span className="absolute left-0 top-0 bottom-0 w-0.5 bg-accent animate-caret-blink" />}
+          {char.char === ' ' ? <span>&nbsp;</span> : char.char}
+        </span>
+      );
+    });
+  };
+
+  return (
+    <div className="w-full max-w-4xl flex flex-col items-center gap-8">
+      <Card className="w-full bg-card/50 border-2 border-border p-8 relative">
+        <CardContent className="p-0">
+          {isLoading ? (
+            <div className="space-y-2 h-40">
+              <Skeleton className="h-8 w-full" />
+              <Skeleton className="h-8 w-full" />
+              <Skeleton className="h-8 w-3/4" />
+            </div>
+          ) : (
+            <div
+              className="tracking-wider leading-relaxed text-left h-40 overflow-hidden"
+              onClick={() => inputRef.current?.focus()}
+              aria-live="polite"
+            >
+              {renderText()}
+            </div>
+          )}
+          <input
+            ref={inputRef}
+            type="text"
+            value={userInput}
+            onChange={handleInput}
+            className="absolute top-0 left-0 w-full h-full opacity-0 cursor-default"
+            autoFocus
+            disabled={isLoading || isFinished}
+            autoComplete="off"
+            autoCorrect="off"
+            autoCapitalize="off"
+            spellCheck="false"
+          />
+        </CardContent>
+      </Card>
+      
+      <div className="flex items-center justify-between w-full max-w-xl">
+        <div className="flex items-center gap-6 text-center">
+            <div className="flex flex-col items-center gap-1">
+              <span className="text-sm font-headline text-muted-foreground">WPM</span>
+              <span className="text-3xl font-bold text-accent">{wpm}</span>
+            </div>
+            <div className="flex flex-col items-center gap-1">
+              <span className="text-sm font-headline text-muted-foreground">Acc</span>
+              <span className="text-3xl font-bold text-accent">{accuracy}%</span>
+            </div>
+            <div className="flex flex-col items-center gap-1">
+              <span className="text-sm font-headline text-muted-foreground">Time</span>
+              <span className="text-3xl font-bold text-accent">{formattedTime}</span>
+            </div>
+        </div>
+        <Button onClick={() => resetTest(true)} size="icon" variant="outline" className="h-12 w-12 border-2 border-accent/50 text-accent hover:bg-accent/10 hover:text-accent">
+          <RefreshCw className="h-6 w-6" />
+          <span className="sr-only">Restart Test</span>
+        </Button>
+      </div>
+
+      {isFinished && (
+        <div className="flex flex-col items-center gap-4 animate-in fade-in duration-500">
+            <h2 className="text-2xl font-headline text-accent">Test Complete!</h2>
+            <p className="text-muted-foreground">Well done! Ready for the next round?</p>
+            <Button onClick={() => resetTest(false)} className="bg-accent text-accent-foreground hover:bg-accent/90">
+                Next Text
+            </Button>
+        </div>
+      )}
+    </div>
+  );
+}
