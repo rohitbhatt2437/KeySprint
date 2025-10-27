@@ -174,7 +174,7 @@ export default function TypingTest() {
               onClick={() => inputRef.current?.focus()}
               aria-live="polite"
             >
-              <div>
+              <div className="flex flex-wrap">
                 {text.map((char, index) => {
                     const isCurrent = index === userInput.length;
                     return (
@@ -189,7 +189,7 @@ export default function TypingTest() {
                                 }
                                 )}
                             >
-                                {char.char === ' ' ? <span>&nbsp;</span> : char.char}
+                                {char.char}
                             </span>
                             {isCurrent && !isFinished && <span ref={caretRef} className="absolute inset-y-0 left-0 w-0.5 bg-accent animate-caret-blink" />}
                         </span>
